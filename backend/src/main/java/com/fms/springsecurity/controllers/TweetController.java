@@ -19,8 +19,10 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fms.springsecurity.dto.CreateTweetDto;
 import com.fms.springsecurity.dto.FeedDto;
 import com.fms.springsecurity.dto.FeedItemDto;
+import com.fms.springsecurity.entities.Like;
 import com.fms.springsecurity.entities.Role;
 import com.fms.springsecurity.entities.Tweet;
+import com.fms.springsecurity.repositories.LikeRepository;
 import com.fms.springsecurity.repositories.TweetRepository;
 import com.fms.springsecurity.repositories.UserRepository;
 
@@ -29,10 +31,13 @@ public class TweetController {
 
     private final TweetRepository tweetRepository;
     private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
 
-    public TweetController(TweetRepository tweetRepository, UserRepository userRepository) {
+    public TweetController(TweetRepository tweetRepository, UserRepository userRepository,
+            LikeRepository likeRepository) {
         this.tweetRepository = tweetRepository;
         this.userRepository = userRepository;
+        this.likeRepository = likeRepository;
     }
 
     @GetMapping("/feed")
@@ -43,7 +48,9 @@ public class TweetController {
                 .map(tweet -> new FeedItemDto(
                         tweet.getTweetId(),
                         tweet.getContent(),
-                        tweet.getUser().getUsername()));
+                        tweet.getUser().getUsername(),
+                        tweet.getLikes(),
+                        tweet.getcomments().size()));
 
         return ResponseEntity.ok(
                 new FeedDto(tweets.getContent(), page, pageSize, tweets.getTotalPages(), tweets.getTotalElements()));
@@ -79,6 +86,26 @@ public class TweetController {
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/tweets/{id}")
+    public ResponseEntity<Void> likeTweet(@PathVariable("id") long tweetId, JwtAuthenticationToken token) {
+        var tweet = tweetRepository.findById(tweetId);
+        var user = userRepository.findById(UUID.fromString(token.getName()));
+
+        if (!likeRepository.existsByTweetAndUser(tweet.get(), user.get())) {
+            var like = new Like();
+            like.setTweet(tweet.get());
+            like.setUser(user.get());
+
+            likeRepository.save(like);
+
+            tweet.get().setLikes(tweet.get().getLikes() + 1);
+            tweetRepository.save(tweet.get());
+        }
+
+        return ResponseEntity.ok().build();
+
     }
 
 }

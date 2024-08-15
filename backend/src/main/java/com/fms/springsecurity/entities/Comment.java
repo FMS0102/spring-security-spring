@@ -1,7 +1,6 @@
 package com.fms.springsecurity.entities;
 
 import java.time.Instant;
-import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -12,56 +11,54 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "tb_tweets")
-public class Tweet {
+@Table(name = "tb_comments")
+public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(name = "tweet_id")
-    private Long tweetId;
+    @Column(name = "comment_id")
+    private Long commentId;
+
+    @ManyToOne
+    @JoinColumn(name = "tweet_id")
+    private Tweet tweet;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    private String content;
+
     private int likes;
 
-    @OneToMany(mappedBy = "tweet")
-    private List<Comment> comments;
+    private String comment;
 
     @CreationTimestamp
     private Instant creationTimestamp;
 
-    public Long getTweetId() {
-        return tweetId;
+    public Long getCommentId() {
+        return commentId;
     }
 
-    public void setTweetId(Long tweetId) {
-        this.tweetId = tweetId;
+    public void setCommentId(Long commentId) {
+        this.commentId = commentId;
     }
 
-    public User getUser() {
-        return user;
+    public Tweet getTweet() {
+        return tweet;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setTweet(Tweet tweet) {
+        this.tweet = tweet;
     }
 
-    public String getContent() {
-        return content;
+    public String getComment() {
+        return comment;
     }
 
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public Instant getCreationTimestamp() {
-        return creationTimestamp;
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     public int getLikes() {
@@ -72,15 +69,20 @@ public class Tweet {
         this.likes = likes;
     }
 
-    public List<Comment> getcomments() {
-        return comments;
+    public User getUser() {
+        return user;
     }
 
-    public void setcomments(List<Comment> comments) {
-        this.comments = comments;
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Instant getCreationTimestamp() {
+        return creationTimestamp;
     }
 
     public void setCreationTimestamp(Instant creationTimestamp) {
         this.creationTimestamp = creationTimestamp;
     }
+
 }
