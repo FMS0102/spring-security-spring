@@ -4,20 +4,24 @@ import java.util.UUID;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fms.springsecurity.dto.CommentsDto;
 import com.fms.springsecurity.dto.CommentsItemDto;
 import com.fms.springsecurity.dto.CreateCommentDto;
 import com.fms.springsecurity.entities.Comment;
 import com.fms.springsecurity.entities.Like;
+import com.fms.springsecurity.entities.Role;
 import com.fms.springsecurity.repositories.CommentRepository;
 import com.fms.springsecurity.repositories.LikeRepository;
 import com.fms.springsecurity.repositories.TweetRepository;
@@ -74,9 +78,42 @@ public class CommentController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/tweet/{id}/comments/{comments_id}")
+    @DeleteMapping("/tweets/{id}/comments/{commentsId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable("id") long tweetId,
+            @PathVariable("commentsId") long commentId,
+            JwtAuthenticationToken token) {
+
+        var user = userRepository.findById(UUID.fromString(token.getName()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+
+        var tweet = tweetRepository.findById(tweetId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tweet não encontrado"));
+
+        var comment = tweet.getcomments().stream()
+                .filter(res -> res.getCommentId().equals(commentId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comentário não encontrado"));
+
+        var isAdmin = user.getRoles().stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase(Role.Values.ADMIN.name()));
+
+        if (isAdmin || comment.getUser().getUserId().equals(UUID.fromString(token.getName()))) {
+            if (comment.getLikes() > 0) {
+                likeRepository.deleteByCommentId(commentId);
+            }
+
+            commentRepository.deleteById(commentId);
+        } else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/tweets/{id}/comments/{commentsId}")
     public ResponseEntity<Void> likeComment(@PathVariable("id") long tweetId,
-            @PathVariable("comments_id") long commentId,
+            @PathVariable("commentsId") long commentId,
             JwtAuthenticationToken token) {
         var tweet = tweetRepository.findById(tweetId);
         var user = userRepository.findById(UUID.fromString(token.getName()));
