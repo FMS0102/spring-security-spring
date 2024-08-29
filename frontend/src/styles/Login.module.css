@@ -1,0 +1,40 @@
+.pageLogin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+}
+
+.loginContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 400px;
+  height: 300px;
+  padding: 20px;
+  background: var(--primary-glow);
+  border-radius: 10px;
+  margin: 100px 50px;
+}
+
+.formLogin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+
+}
+
+.formLogin input{
+  width: 250px;
+  height: 30px;
+  margin: 10px;
+}
+
+.loginContainer button{
+  width: 150px;
+  height: 25px;
+  margin-top: 10px;
+}
